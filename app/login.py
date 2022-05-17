@@ -2,7 +2,7 @@ from passlib.context import CryptContext
 from fastapi import HTTPException, status
 from jose import JWTError, jwt
 from datetime import datetime, timedelta
-import mysql.connector
+
 from pydantic import BaseModel
 from app.config import settings
 import psycopg2
@@ -58,19 +58,22 @@ class Loginuser(BaseModel):
     email:str
     password:str
 def loginuser(user:Loginuser):
-    mydb = psycopg2.connect(
-    host=settings.HOST_NAME,
-    user=settings.USER_NAME,
-    password=settings.USER_PASSWORD,
-    database=settings.DATABASE_NAME,
-    cursor_factory=RealDictCursor
-    )
-    mycursor = mydb.cursor()
-    val = (user.email,)
-    mycursor.execute("SELECT email,password from users where email=%s and status='Active'", val)
-    myresult = mycursor.fetchone()
-    mycursor.close()
-    mydb.close()
+    try:
+        mydb = psycopg2.connect(
+        host=settings.HOST_NAME,
+        user=settings.USER_NAME,
+        password=settings.USER_PASSWORD,
+        database=settings.DATABASE_NAME,
+        cursor_factory=RealDictCursor
+        )
+        mycursor = mydb.cursor()
+        val = (user.email,)
+        mycursor.execute("SELECT email,password from users where email=%s and status='Active'", val)
+        myresult = mycursor.fetchone()
+        mycursor.close()
+        mydb.close()
+    except:
+        return({"msg":"Connection error"})
     
     if myresult:
         # print(myresult['name'])
@@ -132,45 +135,77 @@ def getrole(Manish:str):
     username = verifyuser(Manish)
     if not username:
         raise HTTPException(status.HTTP_404_NOT_FOUND, detail=f"invalid user")
-    mydb = psycopg2.connect(
-    host=settings.HOST_NAME,
-    user=settings.USER_NAME,
-    password=settings.USER_PASSWORD,
-    database=settings.DATABASE_NAME,
-    cursor_factory=RealDictCursor
-    )
-    mycursor = mydb.cursor()
-    sql = "select role from users where email=%s"
-    val = (username,)
-    mycursor.execute(sql, val)
-    myresult = mycursor.fetchone()
-    mycursor.close()
-    mydb.close()
-    if not myresult:
-        raise HTTPException(status.HTTP_404_NOT_FOUND, detail=f"invalid user")
-    return myresult["role"]
+    try:
+        mydb = psycopg2.connect(
+        host=settings.HOST_NAME,
+        user=settings.USER_NAME,
+        password=settings.USER_PASSWORD,
+        database=settings.DATABASE_NAME,
+        cursor_factory=RealDictCursor
+        )
+        mycursor = mydb.cursor()
+        sql = "select role from users where email=%s"
+        val = (username,)
+        mycursor.execute(sql, val)
+        myresult = mycursor.fetchone()
+        mycursor.close()
+        mydb.close()
+        if not myresult:
+            raise HTTPException(status.HTTP_404_NOT_FOUND, detail=f"invalid user")
+        return myresult["role"]
+    except:
+        return({"msg":"Connection error"})
 
 def getusername(Manish:str):
     username = verifyuser(Manish)
     if not username:
         raise HTTPException(status.HTTP_404_NOT_FOUND, detail=f"invalid user")
-    mydb = psycopg2.connect(
-    host=settings.HOST_NAME,
-    user=settings.USER_NAME,
-    password=settings.USER_PASSWORD,
-    database=settings.DATABASE_NAME,
-    cursor_factory=RealDictCursor
-    )
-    mycursor = mydb.cursor()
-    sql = "select name from users where email=%s"
-    val = (username,)
-    mycursor.execute(sql, val)
-    myresult = mycursor.fetchone()
-    mycursor.close()
-    mydb.close()
-    if not myresult:
+    try:
+        mydb = psycopg2.connect(
+        host=settings.HOST_NAME,
+        user=settings.USER_NAME,
+        password=settings.USER_PASSWORD,
+        database=settings.DATABASE_NAME,
+        cursor_factory=RealDictCursor
+        )
+        mycursor = mydb.cursor()
+        sql = "select name from users where email=%s"
+        val = (username,)
+        mycursor.execute(sql, val)
+        myresult = mycursor.fetchone()
+        mycursor.close()
+        mydb.close()
+        if not myresult:
+            raise HTTPException(status.HTTP_404_NOT_FOUND, detail=f"invalid user")
+        return myresult["name"]
+    except:
+        return({"msg":"Connection error"})
+
+def getuserid(Manish:str):
+    username = verifyuser(Manish)
+    if not username:
         raise HTTPException(status.HTTP_404_NOT_FOUND, detail=f"invalid user")
-    return myresult["name"]
+    try:
+        mydb = psycopg2.connect(
+        host=settings.HOST_NAME,
+        user=settings.USER_NAME,
+        password=settings.USER_PASSWORD,
+        database=settings.DATABASE_NAME,
+        cursor_factory=RealDictCursor
+        )
+        mycursor = mydb.cursor()
+        sql = "select id from users where email=%s"
+        val = (username,)
+        mycursor.execute(sql, val)
+        myresult = mycursor.fetchone()
+        mycursor.close()
+        mydb.close()
+        if not myresult:
+            raise HTTPException(status.HTTP_404_NOT_FOUND, detail=f"invalid user")
+        return myresult["id"]
+    except:
+        return({"msg":"Connection error"})
+
 
 class Changepassword(BaseModel):
     old_password:str
@@ -180,42 +215,44 @@ def changepassword(changepass:Changepassword,Manish):
     email=verifyuser(Manish)
     if not email:
          raise HTTPException(status.HTTP_404_NOT_FOUND, detail=f"invalid user")
+    try:
+        mydb = psycopg2.connect(
+        host=settings.HOST_NAME,
+        user=settings.USER_NAME,
+        password=settings.USER_PASSWORD,
+        database=settings.DATABASE_NAME,
+        cursor_factory=RealDictCursor
+        )
+        mycursor = mydb.cursor()
+        # print("SELECT name,password FROM ioc where name=%s")
+        val = (email,)
+        mycursor.execute("SELECT email,password FROM users where email=%s", val)
+        myresult = mycursor.fetchone()
+        mycursor.close()
+        mydb.close()
+        # myres=dict(zip(mycursor.column_names, mycursor.fetchall()))
+        if myresult:
+            # print(myresult['name'])
+            if pwd_context.verify(changepass.old_password, myresult["password"]):
+                mydb = psycopg2.connect(
+                host=settings.HOST_NAME,
+                user=settings.USER_NAME,
+                password=settings.USER_PASSWORD,
+                database=settings.DATABASE_NAME,
+                cursor_factory=RealDictCursor
+                )
+                mycursor = mydb.cursor()
+                # print("SELECT name,password FROM ioc where name=%s")
+                val = (encryptpassword(changepass.new_password),email,)
+                sql = "UPDATE users SET password=%s WHERE email=%s"
+                mycursor.execute(sql, val)
+                mydb.commit()
+                row=mycursor.rowcount
+                mycursor.close()
+                mydb.close()
+                if(row>0):
+                    return({"msg":"password changed successfully"})
 
-    mydb = psycopg2.connect(
-    host=settings.HOST_NAME,
-    user=settings.USER_NAME,
-    password=settings.USER_PASSWORD,
-    database=settings.DATABASE_NAME,
-    cursor_factory=RealDictCursor
-    )
-    mycursor = mydb.cursor()
-    # print("SELECT name,password FROM ioc where name=%s")
-    val = (email,)
-    mycursor.execute("SELECT email,password FROM users where email=%s", val)
-    myresult = mycursor.fetchone()
-    mycursor.close()
-    mydb.close()
-    # myres=dict(zip(mycursor.column_names, mycursor.fetchall()))
-    if myresult:
-        # print(myresult['name'])
-        if pwd_context.verify(changepass.old_password, myresult["password"]):
-            mydb = psycopg2.connect(
-            host=settings.HOST_NAME,
-            user=settings.USER_NAME,
-            password=settings.USER_PASSWORD,
-            database=settings.DATABASE_NAME,
-            cursor_factory=RealDictCursor
-            )
-            mycursor = mydb.cursor()
-            # print("SELECT name,password FROM ioc where name=%s")
-            val = (encryptpassword(changepass.new_password),email,)
-            sql = "UPDATE users SET password=%s WHERE email=%s"
-            mycursor.execute(sql, val)
-            mydb.commit()
-            row=mycursor.rowcount
-            mycursor.close()
-            mydb.close()
-            if(row>0):
-                return({"msg":"password changed successfully"})
-
-    return({"error":"Password not updated, check old password"})
+        return({"error":"Password not updated, check old password"})
+    except:
+        return({"msg":"Connection error"})

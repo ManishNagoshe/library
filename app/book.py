@@ -3,8 +3,8 @@ from unicodedata import decimal
 from app import login
 from fastapi import HTTPException, status,APIRouter
 from jose import JWTError, jwt
-from datetime import datetime, timedelta
-import mysql.connector
+from datetime import date
+
 from pydantic import BaseModel
 from app.config import settings
 from typing import List, Optional
@@ -53,8 +53,6 @@ def insertbook(response:Response,books:Insertbook,Manish:Optional[str]=Cookie(No
         response.set_cookie(key="Manish",value=login.setcookie(login.verifyuser(Manish)), httponly=True,secure=settings.SECURITYHHTPS, samesite=settings.SAMESITE)
         return({"msg":"Book registered successfully"})
     except :
-        mycursor.close()
-        mydb.close()
         return({"msg":"error occured while registring the book please check all fields"})
 
 class Booksallpagination(BaseModel):
@@ -119,25 +117,94 @@ def seacrhbyanybooks(response:Response,books:Seachbyany,Manish:Optional[str]=Coo
     
     if(books.endindex<books.startindex):
         return({"msg":"end index should be greater than start index"})
+    try:
+        mydb = psycopg2.connect(
+        host=settings.HOST_NAME,
+        user=settings.USER_NAME,
+        password=settings.USER_PASSWORD,
+        database=settings.DATABASE_NAME,
+        cursor_factory=RealDictCursor
+        )
+        mycursor = mydb.cursor()
+        max_num=books.endindex-books.startindex
+        val = (f"%{books.title}%",books.title,books.authors,books.authors,max_num,books.startindex)
+        # print(val)
+        sql="SELECT title,authors,price,status FROM bookmaster where (lower(title) like lower(%s) OR %s IS NULL)  and (lower(authors) like lower(%s) OR %s IS NULL)  order by accno limit %s offset %s"
+        mycursor.execute(sql, val,)
+        myresult = mycursor.fetchall()
+        mycursor.close()
+        mydb.close()
+        response.set_cookie(key="Manish",value=login.setcookie(login.verifyuser(Manish)), httponly=True,secure=settings.SECURITYHHTPS, samesite=settings.SAMESITE)
+        if myresult:
+            return(myresult)
+        else:
+            return
+    except:
+        return({"msg":"Connection error"})
+
+class Issuebook(BaseModel):
+    accno:int
+    userid:int
+
+def checkbookavailability(accno:int):
+    try:
+        mydb = psycopg2.connect(
+        host=settings.HOST_NAME,
+        user=settings.USER_NAME,
+        password=settings.USER_PASSWORD,
+        database=settings.DATABASE_NAME,
+        cursor_factory=RealDictCursor
+        )
+        mycursor = mydb.cursor()
+        
+        val = (accno,)
+        # print(accno)
+        # print(val)
+        sql="SELECT status from bookmaster where accno=%s"
+        mycursor.execute(sql, val)
+        myresult = mycursor.fetchone()
+        mycursor.close()
+        mydb.close()
+        print(myresult['status'])
+        if myresult['status']=="Available":
+            return(True)
+        else:
+            return(False)
+    except:
+        return(False)
+
+@router.post("/issuebook")
+def issuebook(response:Response,books:Issuebook,Manish:Optional[str]=Cookie(None)):
+    role=login.getrole(Manish)
+    if role!=1:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, detail=f"invalid user")
     
-    mydb = psycopg2.connect(
-    host=settings.HOST_NAME,
-    user=settings.USER_NAME,
-    password=settings.USER_PASSWORD,
-    database=settings.DATABASE_NAME,
-    cursor_factory=RealDictCursor
-    )
-    mycursor = mydb.cursor()
-    max_num=books.endindex-books.startindex
-    val = (f"%{books.title}%",books.title,books.authors,books.authors,max_num,books.startindex)
-    # print(val)
-    sql="SELECT title,authors,price,status FROM bookmaster where (lower(title) like lower(%s) OR %s IS NULL)  and (lower(authors) like lower(%s) OR %s IS NULL)  order by accno limit %s offset %s"
-    mycursor.execute(sql, val,)
-    myresult = mycursor.fetchall()
-    mycursor.close()
-    mydb.close()
-    response.set_cookie(key="Manish",value=login.setcookie(login.verifyuser(Manish)), httponly=True,secure=settings.SECURITYHHTPS, samesite=settings.SAMESITE)
-    if myresult:
-        return(myresult)
-    else:
-        return
+    # print(checkbookavailability(books.accno))
+    if not checkbookavailability(books.accno):
+        return({"msg":"Book is not available"})
+
+    try:
+        mydb = psycopg2.connect(
+        host=settings.HOST_NAME,
+        user=settings.USER_NAME,
+        password=settings.USER_PASSWORD,
+        database=settings.DATABASE_NAME,
+        cursor_factory=RealDictCursor
+        )
+        mycursor = mydb.cursor()
+        sql = "INSERT INTO usage (userid, accno,issuedate) VALUES (%s, %s,%s)"
+        val = (books.userid,books.accno,date.today())
+        mycursor.execute(sql,val,)
+
+        sql = "UPDATE bookmaster SET status='Issued', issuedto=%s WHERE accno=%s"
+        val = (books.userid,books.accno,)
+        mycursor.execute(sql,val)
+
+        mydb.commit()    
+        mycursor.close()
+        mydb.close()
+        response.set_cookie(key="Manish",value=login.setcookie(login.verifyuser(Manish)), httponly=True,secure=settings.SECURITYHHTPS, samesite=settings.SAMESITE)
+        return({"msg":"Book registered successfully"})
+    except:
+        mydb.rollback()
+        return({"msg":"Connection error"})

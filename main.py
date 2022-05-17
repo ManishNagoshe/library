@@ -1,7 +1,7 @@
 from typing import List, Optional
 from fastapi import FastAPI,Cookie
 from app import login,book
-import requests
+
 from starlette.requests import cookie_parser
 import os
 from app.config import settings
