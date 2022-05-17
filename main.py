@@ -43,6 +43,9 @@ def loginpage(response:Response,userdetails:login.Loginuser): #
 def getrole(Manish:Optional[str] = Cookie(None)):
     return(login.getrole(Manish))
 
+@app.get("/getusername")
+def getusername(Manish:Optional[str] = Cookie(None)):
+    return(login.getusername(Manish))
 
 @app.put("/logout")
 def logout(response:Response):
