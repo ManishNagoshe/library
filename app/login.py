@@ -49,6 +49,8 @@ def createuser(createuser:Createuser):
         mydb.close()
         return({"msg":"user created sucessfully"})
     except :
+        mycursor.close()
+        mydb.close()
         return({"msg":"error occured, role is invalid or user may exist"})
 
 class Loginuser(BaseModel):
@@ -110,6 +112,8 @@ def verifyuser(cookie: str):
         if not myresult:
             raise HTTPException(status.HTTP_404_NOT_FOUND, detail=f"invalid user")
     except JWTError:
+        mycursor.close()
+        mydb.close()
         raise HTTPException(status.HTTP_404_NOT_FOUND, detail=f"invalid user")
     return username
 
@@ -188,4 +192,4 @@ def changepassword(changepass:Changepassword,Manish):
             if(row>0):
                 return({"msg":"password changed successfully"})
 
-    return({"error":"Password not updated"})
+    return({"error":"Password not updated, check old password"})

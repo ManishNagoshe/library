@@ -1,6 +1,6 @@
 from typing import List, Optional
 from fastapi import FastAPI,Cookie
-from app import login
+from app import login,book
 import requests
 from starlette.requests import cookie_parser
 import os
@@ -44,8 +44,6 @@ def getrole(Manish:Optional[str] = Cookie(None)):
     return(login.getrole(Manish))
 
 
-   
-
 @app.put("/logout")
 def logout(response:Response):
     response.delete_cookie("Manish")
@@ -57,21 +55,17 @@ def changepassword(user:login.Changepassword,Manish:Optional[str] = Cookie(None)
     return(login.changepassword(user,Manish))
 #login------------------------------------------------------------------
 
+# Books-----------------------------------------------------------------
+
+@app.post("/book/insertbook")
+def insertbook(books:book.Insertbook,Manish:Optional[str]=Cookie(None)):
+    return(book.insertbook(books,Manish))
+
+# Books-----------------------------------------------------------------
 
 
 
 
-# @app.post("/adminresetpassword")
-# def changepassword(name:login.resetpass,Manish:Optional[str] = Cookie(None)):
-#     return(login.resetpassword(name.ioc,name.password,Manish))
-
-# @app.post("/admincreateuser")
-# def createuser(user:login.Createuser,Manish:Optional[str] = Cookie(None)):
-#     return(login.createuser(user,Manish))
-
-
-
-#login------------------------------------------------------------------
 app = CORSMiddleware(
     app=app,
     allow_origins=origins,
