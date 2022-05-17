@@ -1,4 +1,5 @@
 from ast import Return
+from re import M
 from typing import List, Optional
 from fastapi import FastAPI,HTTPException,status,UploadFile,Response,Request,Cookie
 from fastapi.params import Body, File
@@ -33,29 +34,30 @@ app=FastAPI()
 
 origins=settings.ORIGINS
 
-# Get role
-@app.get("/getrole")
-def getrole():
-    return(login.getrole())
 
 
+#sign up
 @app.post("/signup")
-def signup():
-    return({"message":"hello"})
-
+def signup(usercreate:login.Createuser):
+    return(login.createuser(usercreate))
 
 
 #login------------------------------------------------------------------
-# @app.post("/login")
-# def loginpage(request:Request,response:Response,userdetails:user): #
+@app.post("/login")
+def loginpage(response:Response,userdetails:login.Loginuser): #
     
-#     token=login.loginuser(userdetails.username,userdetails.password)
-#     if(token['msg']=="invalid credentials"):
-#         return({"msg":"invalid credentials"})
+    token=login.loginuser(userdetails)
+    if(token['msg']=="invalid credentials"):
+        return({"msg":"invalid credentials"})
     
-#     response.set_cookie(key="Manish",value=token['cookie'], httponly=True,secure=settings.SECURITYHHTPS, samesite=settings.SAMESITE)
+    response.set_cookie(key="Manish",value=token['cookie'], httponly=True,secure=settings.SECURITYHHTPS, samesite=settings.SAMESITE)
     
-#     return ({"msg":"login Successfull","uname":token['uname']})#,"Manish":token['cookie']})
+    return ({"msg":"login Successfull"})#,"Manish":token['cookie']})
+
+@app.get("/getrole")
+def getrole(Manish:Optional[str] = Cookie(None)):
+    return(login.getrole(Manish))
+   
 
 @app.post("/logout")
 def logout(response:Response):
