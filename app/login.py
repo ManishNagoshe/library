@@ -150,6 +150,28 @@ def getrole(Manish:str):
         raise HTTPException(status.HTTP_404_NOT_FOUND, detail=f"invalid user")
     return myresult["role"]
 
+def getusername(Manish:str):
+    username = verifyuser(Manish)
+    if not username:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, detail=f"invalid user")
+    mydb = psycopg2.connect(
+    host=settings.HOST_NAME,
+    user=settings.USER_NAME,
+    password=settings.USER_PASSWORD,
+    database=settings.DATABASE_NAME,
+    cursor_factory=RealDictCursor
+    )
+    mycursor = mydb.cursor()
+    sql = "select name from users where email=%s"
+    val = (username,)
+    mycursor.execute(sql, val)
+    myresult = mycursor.fetchone()
+    mycursor.close()
+    mydb.close()
+    if not myresult:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, detail=f"invalid user")
+    return myresult["name"]
+
 class Changepassword(BaseModel):
     old_password:str
     new_password:str
