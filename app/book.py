@@ -1,3 +1,4 @@
+from http import cookies
 from unicodedata import decimal
 from app import login
 from fastapi import HTTPException, status,APIRouter
@@ -76,6 +77,42 @@ def getallbooks_with_start_end_index(books:Booksallpagination,Manish:Optional[st
         books.startindex=books.startindex-1
     val = (books.startindex,books.endindex)
     sql="SELECT title,authors,price,status FROM bookmaster order by accno limit %s,%s"
+    mycursor.execute(sql, val,)
+    myresult = mycursor.fetchall()
+    mycursor.close()
+    mydb.close()
+    if myresult:
+        return(myresult)
+    else:
+        return
+
+class Seachbyany(BaseModel):
+    title:Optional[str]=None
+    authors:Optional[str]=None
+    startindex:int
+    endindex:int
+
+@router.post("/searchbook")
+def seacrhbyanybooks(books:Seachbyany,Manish:Optional[str]=Cookie(None)):
+    role=login.getrole(Manish)
+    if not role:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, detail=f"invalid user")
+
+    if(books.endindex-books.startindex>=10):
+        return({"msg":"Maximum 10 books can be fetched"})
+    
+    mydb = mysql.connector.connect(
+    host=settings.HOST_NAME,
+    user=settings.USER_NAME,
+    password=settings.USER_PASSWORD,
+    database=settings.DATABASE_NAME,
+    )
+    mycursor = mydb.cursor(dictionary=True)
+    if(books.startindex>0):
+        books.startindex=books.startindex-1
+    val = (books.title,f"%{books.title}%",books.authors,f"%{books.authors}%",books.startindex,books.endindex)
+    # print(val)
+    sql="SELECT title,authors,price,status FROM bookmaster where (title LIKE CASE WHEN %s IS NOT NULL THEN %s ELSE '%' END) and (authors LIKE CASE WHEN %s IS NOT NULL THEN %s ELSE '%' END) order by accno limit %s,%s"
     mycursor.execute(sql, val,)
     myresult = mycursor.fetchall()
     mycursor.close()
