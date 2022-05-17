@@ -56,11 +56,7 @@ def changepassword(user:login.Changepassword,Manish:Optional[str] = Cookie(None)
 #login------------------------------------------------------------------
 
 # Books-----------------------------------------------------------------
-
-@app.post("/book/insertbook")
-def insertbook(books:book.Insertbook,Manish:Optional[str]=Cookie(None)):
-    return(book.insertbook(books,Manish))
-
+app.include_router(book.router)
 # Books-----------------------------------------------------------------
 
 
