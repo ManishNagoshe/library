@@ -56,10 +56,10 @@ class Loginuser(BaseModel):
     password:str
 def loginuser(user:Loginuser):
     mydb = mysql.connector.connect(
-        host=settings.HOST_NAME,
-        user=settings.USER_NAME,
-        password=settings.USER_PASSWORD,
-        database=settings.DATABASE_NAME,
+    host=settings.HOST_NAME,
+    user=settings.USER_NAME,
+    password=settings.USER_PASSWORD,
+    database=settings.DATABASE_NAME,
     )
     mycursor = mydb.cursor(dictionary=True)
     val = (user.email,)
@@ -143,3 +143,49 @@ def getrole(Manish:str):
     if not myresult:
         raise HTTPException(status.HTTP_404_NOT_FOUND, detail=f"invalid user")
     return myresult["role"]
+
+class Changepassword(BaseModel):
+    old_password:str
+    new_password:str
+
+def changepassword(changepass:Changepassword,Manish):
+    email=verifyuser(Manish)
+    if not email:
+         raise HTTPException(status.HTTP_404_NOT_FOUND, detail=f"invalid user")
+
+    mydb = mysql.connector.connect(
+        host=settings.HOST_NAME,
+        user=settings.USER_NAME,
+        password=settings.USER_PASSWORD,
+        database=settings.DATABASE_NAME,
+    )
+    mycursor = mydb.cursor(dictionary=True)
+    # print("SELECT name,password FROM ioc where name=%s")
+    val = (email,)
+    mycursor.execute("SELECT email,password FROM users where email=%s", val)
+    myresult = mycursor.fetchone()
+    mycursor.close()
+    mydb.close()
+    # myres=dict(zip(mycursor.column_names, mycursor.fetchall()))
+    if myresult:
+        # print(myresult['name'])
+        if pwd_context.verify(changepass.old_password, myresult["password"]):
+            mydb = mysql.connector.connect(
+            host=settings.HOST_NAME,
+            user=settings.USER_NAME,
+            password=settings.USER_PASSWORD,
+            database=settings.DATABASE_NAME,
+            )
+            mycursor = mydb.cursor(dictionary=True)
+            # print("SELECT name,password FROM ioc where name=%s")
+            val = (encryptpassword(changepass.new_password),email,)
+            sql = "UPDATE users SET password=%s WHERE email=%s"
+            mycursor.execute(sql, val)
+            mydb.commit()
+            row=mycursor.rowcount
+            mycursor.close()
+            mydb.close()
+            if(row>0):
+                return({"msg":"password changed successfully"})
+
+    return({"error":"Password not updated"})
