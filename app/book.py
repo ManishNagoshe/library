@@ -44,14 +44,16 @@ def insertbook(response:Response,books:Insertbook,Manish:Optional[str]=Cookie(No
         cursor_factory=RealDictCursor
         )
         mycursor = mydb.cursor()
-        sql = "INSERT INTO bookmaster (title, authors,price) VALUES (%s, %s,%s)"
+        sql = "INSERT INTO bookmaster (title, authors,price) VALUES (%s, %s,%s) returning accno"
         val = (books.title,books.author,books.price)
         mycursor.execute(sql,val,)
-        mydb.commit()    
+        rowid=mycursor.fetchone()
+        mydb.commit()
+        # print(rowid['accno'])
         mycursor.close()
         mydb.close()
         response.set_cookie(key="Manish",value=login.setcookie(login.verifyuser(Manish)), httponly=True,secure=settings.SECURITYHHTPS, samesite=settings.SAMESITE)
-        return({"msg":"Book registered successfully"})
+        return({"msg":"Book registered successfully","accno":rowid['accno']})
     except :
         return({"msg":"error occured while registring the book please check all fields"})
 
@@ -98,14 +100,14 @@ def getallbooks_with_start_end_index(response:Response,books:Booksallpagination,
     except:
         return({"msg":"Connection error"})
 
-class Seachbyany(BaseModel):
+class Searchbyany(BaseModel):
     title:Optional[str]=None
     authors:Optional[str]=None
     startindex:int
     endindex:int
 
 @router.post("/searchbook")
-def seacrhbyanybooks(response:Response,books:Seachbyany,Manish:Optional[str]=Cookie(None)):
+def seacrhbyanybooks(response:Response,books:Searchbyany,Manish:Optional[str]=Cookie(None)):
     role=login.getrole(Manish)
     if not role:
         raise HTTPException(status.HTTP_404_NOT_FOUND, detail=f"invalid user")
@@ -166,12 +168,9 @@ def checkbookavailability(accno:int):
         mycursor.close()
         mydb.close()
         print(myresult['status'])
-        if myresult['status']=="Available":
-            return(True)
-        else:
-            return(False)
+        return(myresult['status'])
     except:
-        return(False)
+        return("Error")
 
 @router.post("/issuebook")
 def issuebook(response:Response,books:Issuebook,Manish:Optional[str]=Cookie(None)):
@@ -180,7 +179,7 @@ def issuebook(response:Response,books:Issuebook,Manish:Optional[str]=Cookie(None
         raise HTTPException(status.HTTP_404_NOT_FOUND, detail=f"invalid user")
     
     # print(checkbookavailability(books.accno))
-    if not checkbookavailability(books.accno):
+    if checkbookavailability(books.accno)!="Available":
         return({"msg":"Book is not available"})
 
     try:
@@ -204,7 +203,71 @@ def issuebook(response:Response,books:Issuebook,Manish:Optional[str]=Cookie(None
         mycursor.close()
         mydb.close()
         response.set_cookie(key="Manish",value=login.setcookie(login.verifyuser(Manish)), httponly=True,secure=settings.SECURITYHHTPS, samesite=settings.SAMESITE)
-        return({"msg":"Book registered successfully"})
+        return({"msg":"Book issued successfully"})
+    except:
+        mydb.rollback()
+        return({"msg":"Connection error"})
+    
+
+
+def returnbookavailability(accno:int):
+    try:
+        mydb = psycopg2.connect(
+        host=settings.HOST_NAME,
+        user=settings.USER_NAME,
+        password=settings.USER_PASSWORD,
+        database=settings.DATABASE_NAME,
+        cursor_factory=RealDictCursor
+        )
+        mycursor = mydb.cursor()
+        
+        val = (accno,)
+        # print(accno)
+        # print(val)
+        sql="SELECT status,issuedto from bookmaster where accno=%s"
+        mycursor.execute(sql, val)
+        myresult = mycursor.fetchone()
+        mycursor.close()
+        mydb.close()
+        # print(myresult['status'])
+        return({"status":myresult['status'],"issuedto":myresult['issuedto']})
+    except:
+        return("Error")
+
+class Returnbook(BaseModel):
+    accno:int
+@router.put("/returnbook")
+def returnbook(response:Response,books:Returnbook,Manish:Optional[str]=Cookie(None)):
+    role=login.getrole(Manish)
+    if role!=1:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, detail=f"invalid user")
+    
+    bookdetail=returnbookavailability(books.accno)
+    if bookdetail['status']!="Issued":
+        return({"msg":"Book is not Issued"})
+    
+    try:
+        mydb = psycopg2.connect(
+        host=settings.HOST_NAME,
+        user=settings.USER_NAME,
+        password=settings.USER_PASSWORD,
+        database=settings.DATABASE_NAME,
+        cursor_factory=RealDictCursor
+        )
+        mycursor = mydb.cursor()
+        sql = "UPDATE usage SET returndate=%s where userid=%s and accno=%s and returndate is NULL"
+        val = (date.today(),bookdetail['issuedto'],books.accno,)
+        mycursor.execute(sql,val,)
+
+        sql = "UPDATE bookmaster SET status='Available', issuedto=%s WHERE accno=%s"
+        val = (None,books.accno,)
+        mycursor.execute(sql,val)
+
+        mydb.commit()    
+        mycursor.close()
+        mydb.close()
+        response.set_cookie(key="Manish",value=login.setcookie(login.verifyuser(Manish)), httponly=True,secure=settings.SECURITYHHTPS, samesite=settings.SAMESITE)
+        return({"msg":"Book Returned successfully"})
     except:
         mydb.rollback()
         return({"msg":"Connection error"})
