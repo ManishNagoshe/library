@@ -236,7 +236,7 @@ def returnbookavailability(accno:int):
 
 class Returnbook(BaseModel):
     accno:int
-@router.post("/returnbook")
+@router.put("/returnbook")
 def returnbook(response:Response,books:Returnbook,Manish:Optional[str]=Cookie(None)):
     role=login.getrole(Manish)
     if role!=1:
