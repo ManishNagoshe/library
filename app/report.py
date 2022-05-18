@@ -383,6 +383,6 @@ def personalreport(response:Response,user:Bookusagereport,Manish:Optional[str]=C
             
         workbook.save(f"bookusage_{user.endindex}.xlsx")
         response.set_cookie(key="Manish",value=login.setcookie(login.verifyuser(Manish)), httponly=True,secure=settings.SECURITYHHTPS, samesite=settings.SAMESITE)
-        return FileResponse(f"bookusage_{user.endindex}.xlsx",media_type="application/pdf",filename=f"bookusage_{user.endindex}.xlsx")
+        return FileResponse(f"bookusage_{user.endindex}.xlsx",media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",filename=f"bookusage_{user.endindex}.xlsx")
     except:
         return({"msg":"Connection error"})
