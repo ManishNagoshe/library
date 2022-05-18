@@ -87,7 +87,7 @@ def getallbooks_with_start_end_index(response:Response,books:Booksallpagination,
         mycursor = mydb.cursor()
         max_num=books.endindex-books.startindex
         val = (max_num,books.startindex)
-        sql="SELECT title,authors,price,status FROM bookmaster order by accno limit %s offset %s"
+        sql="SELECT accno,title,authors,price,status FROM bookmaster order by accno limit %s offset %s"
         mycursor.execute(sql, val,)
         myresult = mycursor.fetchall()
         mycursor.close()
@@ -131,7 +131,7 @@ def seacrhbyanybooks(response:Response,books:Searchbyany,Manish:Optional[str]=Co
         max_num=books.endindex-books.startindex
         val = (f"%{books.title}%",books.title,books.authors,books.authors,max_num,books.startindex)
         # print(val)
-        sql="SELECT title,authors,price,status FROM bookmaster where (lower(title) like lower(%s) OR %s IS NULL)  and (lower(authors) like lower(%s) OR %s IS NULL)  order by accno limit %s offset %s"
+        sql="SELECT accno,title,authors,price,status FROM bookmaster where (lower(title) like lower(%s) OR %s IS NULL)  and (lower(authors) like lower(%s) OR %s IS NULL)  order by accno limit %s offset %s"
         mycursor.execute(sql, val,)
         myresult = mycursor.fetchall()
         mycursor.close()
