@@ -1,6 +1,6 @@
 from typing import List, Optional
 from fastapi import FastAPI,Cookie
-from app import login,book
+from app import login,book, report
 
 from starlette.requests import cookie_parser
 import os
@@ -61,8 +61,9 @@ def changepassword(user:login.Changepassword,Manish:Optional[str] = Cookie(None)
 # Books-----------------------------------------------------------------
 app.include_router(book.router)
 # Books-----------------------------------------------------------------
-
-
+#Report-----------------------------------------------------------------
+app.include_router(report.router)
+#Report-----------------------------------------------------------------
 
 
 app = CORSMiddleware(
