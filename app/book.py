@@ -242,9 +242,12 @@ def returnbook(response:Response,books:Returnbook,Manish:Optional[str]=Cookie(No
     if role!=1:
         raise HTTPException(status.HTTP_404_NOT_FOUND, detail=f"invalid user")
     
-    bookdetail=returnbookavailability(books.accno)
-    if bookdetail['status']!="Issued":
-        return({"msg":"Book is not Issued"})
+    try:
+        bookdetail=returnbookavailability(books.accno)
+        if bookdetail['status']!="Issued":
+            return({"msg":"Book is not Issued"})
+    except:
+        return({"msg":"Please check accno"})
     
     try:
         mydb = psycopg2.connect(
