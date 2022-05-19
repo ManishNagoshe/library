@@ -172,6 +172,30 @@ def checkbookavailability(accno:int):
     except:
         return("Error")
 
+def checkvaliduser(userid:int):
+    try:
+        mydb = psycopg2.connect(
+        host=settings.HOST_NAME,
+        user=settings.USER_NAME,
+        password=settings.USER_PASSWORD,
+        database=settings.DATABASE_NAME,
+        cursor_factory=RealDictCursor
+        )
+        mycursor = mydb.cursor()
+        
+        val = (userid,)
+        # print(accno)
+        # print(val)
+        sql="SELECT status from users where id=%s"
+        mycursor.execute(sql, val)
+        myresult = mycursor.fetchone()
+        mycursor.close()
+        mydb.close()
+        print(myresult['status'])
+        return(myresult['status'])
+    except:
+        return("Error")
+
 @router.post("/issuebook")
 def issuebook(response:Response,books:Issuebook,Manish:Optional[str]=Cookie(None)):
     role=login.getrole(Manish)
@@ -181,6 +205,9 @@ def issuebook(response:Response,books:Issuebook,Manish:Optional[str]=Cookie(None
     # print(checkbookavailability(books.accno))
     if checkbookavailability(books.accno)!="Available":
         return({"msg":"Book is not available"})
+
+    if checkvaliduser(books.userid)!="Active":
+        return({"msg":"User is deleted or does not exists"})
 
     try:
         mydb = psycopg2.connect(
