@@ -208,7 +208,78 @@ def issuebook(response:Response,books:Issuebook,Manish:Optional[str]=Cookie(None
         mydb.rollback()
         return({"msg":"Connection error"})
     
+class Delete_book(BaseModel):
+    accno:int
+@router.put("/delete_book")
+def delete_book(response:Response,books:Delete_book,Manish:Optional[str]=Cookie(None)):
+    role=login.getrole(Manish)
+    if role!=1:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, detail=f"invalid user")
+    
+    # print(checkbookavailability(books.accno))
+    if checkbookavailability(books.accno)=="Deleted" or checkbookavailability(books.accno)=="Error":
+        return({"msg":"Book is already deleted or not available"})
 
+    try:
+        mydb = psycopg2.connect(
+        host=settings.HOST_NAME,
+        user=settings.USER_NAME,
+        password=settings.USER_PASSWORD,
+        database=settings.DATABASE_NAME,
+        cursor_factory=RealDictCursor
+        )
+        mycursor = mydb.cursor()
+            
+        sql = "UPDATE bookmaster SET status='Deleted' WHERE accno=%s"
+        val = (books.accno,)
+        mycursor.execute(sql,val)
+
+        mydb.commit()    
+        mycursor.close()
+        mydb.close()
+        response.set_cookie(key="Manish",value=login.setcookie(login.verifyuser(Manish)), httponly=True,secure=settings.SECURITYHHTPS, samesite=settings.SAMESITE)
+        return({"msg":"Book Deleted successfully"})
+    except:
+        # mydb.rollback()
+        return({"msg":"Connection error"})
+
+class Update_book(BaseModel):
+    accno:int
+    title:str
+    author:str
+    price:float
+@router.put("/update_book")
+def delete_book(response:Response,books:Update_book,Manish:Optional[str]=Cookie(None)):
+    role=login.getrole(Manish)
+    if role!=1:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, detail=f"invalid user")
+    
+    # print(checkbookavailability(books.accno))
+    if checkbookavailability(books.accno)=="Deleted" or checkbookavailability(books.accno)=="Error":
+        return({"msg":"Book is already deleted or not available"})
+
+    try:
+        mydb = psycopg2.connect(
+        host=settings.HOST_NAME,
+        user=settings.USER_NAME,
+        password=settings.USER_PASSWORD,
+        database=settings.DATABASE_NAME,
+        cursor_factory=RealDictCursor
+        )
+        mycursor = mydb.cursor()
+            
+        sql = "UPDATE bookmaster SET title=%s, authors=%s, price=%s WHERE accno=%s"
+        val = (books.title,books.author,books.price,books.accno,)
+        mycursor.execute(sql,val,)
+
+        mydb.commit()    
+        mycursor.close()
+        mydb.close()
+        response.set_cookie(key="Manish",value=login.setcookie(login.verifyuser(Manish)), httponly=True,secure=settings.SECURITYHHTPS, samesite=settings.SAMESITE)
+        return({"msg":"Book updated successfully"})
+    except:
+        # mydb.rollback()
+        return({"msg":"Connection error"})
 
 def returnbookavailability(accno:int):
     try:
