@@ -37,7 +37,7 @@ def loginpage(response:Response,userdetails:login.Loginuser): #
     
     response.set_cookie(key="Manish",value=token['cookie'], httponly=True,secure=settings.SECURITYHHTPS, samesite=settings.SAMESITE)
     
-    return ({"msg":"login Successfull"})#,"Manish":token['cookie']})
+    return ({"msg":"login Successful"})#,"Manish":token['cookie']})
 
 @app.get("/getrole")
 def getrole(Manish:Optional[str] = Cookie(None)):
@@ -51,7 +51,7 @@ def getusername(Manish:Optional[str] = Cookie(None)):
 def logout(response:Response):
     response.delete_cookie("Manish")
     response.set_cookie(key="Manish",value="a", httponly=True,secure=settings.SECURITYHHTPS, samesite=settings.SAMESITE)
-    return({"msg":"logout successfull"})
+    return({"msg":"logout successful"})
 
 @app.post("/changepassword")
 def changepassword(user:login.Changepassword,Manish:Optional[str] = Cookie(None)):
@@ -65,11 +65,11 @@ def getuser_details(response:Response,user:login.User_details,Manish:Optional[st
 def getuser_details(response:Response,user:login.Individual_user,Manish:Optional[str] = Cookie(None)):
     return(login.getuser_details_by_id(response,user,Manish)) 
 
-@app.post("/modify_user_details_by_id")
+@app.put("/modify_user_details_by_id")
 def modify_user_details(response:Response,user:login.Modify_user,Manish:Optional[str] = Cookie(None)):
     return(login.modify_user_details_by_id(response,user,Manish)) 
 
-@app.post("/disable_account")
+@app.put("/disable_account")
 def modify_user_details(response:Response,Manish:Optional[str] = Cookie(None)):
     return(login.disable_account(response,Manish)) 
 #login------------------------------------------------------------------

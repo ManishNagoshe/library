@@ -30,7 +30,7 @@ def insertbook(response:Response,books:Insertbook,Manish:Optional[str]=Cookie(No
         return({"msg":"Name is not valid"})
 
     if len(books.author)<2:
-        return({"msg":"Password is length is shorter than 8"})
+        return({"msg":"Author is short in length"})
     
     if books.price<=0:
         return({"msg":"invalid price"})
@@ -55,7 +55,7 @@ def insertbook(response:Response,books:Insertbook,Manish:Optional[str]=Cookie(No
         response.set_cookie(key="Manish",value=login.setcookie(login.verifyuser(Manish)), httponly=True,secure=settings.SECURITYHHTPS, samesite=settings.SAMESITE)
         return({"msg":"Book registered successfully","accno":rowid['accno']})
     except :
-        return({"msg":"error occured while registring the book please check all fields"})
+        return({"msg":"error occurred while registering the book please check all fields or may connection error"})
 
 class Booksallpagination(BaseModel):
     startindex:int

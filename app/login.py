@@ -51,9 +51,9 @@ def createuser(createuser:Createuser):
         mydb.commit()    
         mycursor.close()
         mydb.close()
-        return({"msg":"user created sucessfully"})
+        return({"msg":"user created successfully"})
     except :
-        return({"msg":"error occured, role is invalid or user may exist"})
+        return({"msg":"error occurred, role is invalid or user may exist"})
 
 class Loginuser(BaseModel):
     email:str
@@ -336,7 +336,7 @@ def disable_account(response:Response,Manish:str):
         mydb.close()
         response.delete_cookie("Manish")
         response.set_cookie(key="Manish",value="a", httponly=True,secure=settings.SECURITYHHTPS, samesite=settings.SAMESITE)
-        return({"msg":"Your account disabled"})
+        return({"msg":"Your account is disabled"})
     except:
         return({"msg":"Connection error"})
 
