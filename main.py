@@ -56,6 +56,22 @@ def logout(response:Response):
 @app.post("/changepassword")
 def changepassword(user:login.Changepassword,Manish:Optional[str] = Cookie(None)):
     return(login.changepassword(user,Manish))
+
+@app.post("/get_user_details")
+def getuser_details(response:Response,user:login.User_details,Manish:Optional[str] = Cookie(None)):
+    return(login.getuser_details(response,user,Manish)) 
+
+@app.post("/get_user_details_by_id")
+def getuser_details(response:Response,user:login.Individual_user,Manish:Optional[str] = Cookie(None)):
+    return(login.getuser_details_by_id(response,user,Manish)) 
+
+@app.post("/modify_user_details_by_id")
+def modify_user_details(response:Response,user:login.Modify_user,Manish:Optional[str] = Cookie(None)):
+    return(login.modify_user_details_by_id(response,user,Manish)) 
+
+@app.post("/disable_account")
+def modify_user_details(response:Response,Manish:Optional[str] = Cookie(None)):
+    return(login.disable_account(response,Manish)) 
 #login------------------------------------------------------------------
 
 # Books-----------------------------------------------------------------

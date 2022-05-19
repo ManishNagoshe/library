@@ -7,6 +7,7 @@ from pydantic import BaseModel
 from app.config import settings
 import psycopg2
 from psycopg2.extras import RealDictCursor 
+from starlette.responses import Response
 import re
 SECRET_KEY = settings.SECRETKEY
 ALGORITHM = settings.ALGORITHM
@@ -203,6 +204,139 @@ def getuserid(Manish:str):
         if not myresult:
             raise HTTPException(status.HTTP_404_NOT_FOUND, detail=f"invalid user")
         return myresult["id"]
+    except:
+        return({"msg":"Connection error"})
+
+
+class User_details(BaseModel):
+    startindex:int
+    endindex:int
+def getuser_details(response:Response,user:User_details,Manish:str):
+    role = getrole(Manish)
+    if role!=1:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, detail=f"invalid user")
+
+    if(user.endindex-user.startindex>10):
+        return({"msg":"Maximum 10 books can be fetched"})
+    if(user.startindex<0):
+        return({"msg":"Start index minimum value should be zero"})
+    
+    if(user.endindex<user.startindex):
+        return({"msg":"end index should be greater than start index"})
+
+    try:
+        mydb = psycopg2.connect(
+        host=settings.HOST_NAME,
+        user=settings.USER_NAME,
+        password=settings.USER_PASSWORD,
+        database=settings.DATABASE_NAME,
+        cursor_factory=RealDictCursor
+        )
+        mycursor = mydb.cursor()
+        max_num=user.endindex-user.startindex
+        val = (max_num,user.startindex,)
+        sql = "select id,email,name,status,role from users order by id limit %s offset %s"
+        
+        mycursor.execute(sql, val)
+        myresult = mycursor.fetchall()
+        mycursor.close()
+        mydb.close()
+        response.set_cookie(key="Manish",value=setcookie(verifyuser(Manish)), httponly=True,secure=settings.SECURITYHHTPS, samesite=settings.SAMESITE)
+        if not myresult:
+            raise HTTPException(status.HTTP_404_NOT_FOUND, detail=f"invalid user")
+        return myresult
+    except:
+        return({"msg":"Connection error"})
+
+class Individual_user(BaseModel):
+    id:int
+def getuser_details_by_id(response:Response,user:Individual_user,Manish:str):
+    role = getrole(Manish)
+    if role!=1:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, detail=f"invalid user")
+
+    
+    try:
+        mydb = psycopg2.connect(
+        host=settings.HOST_NAME,
+        user=settings.USER_NAME,
+        password=settings.USER_PASSWORD,
+        database=settings.DATABASE_NAME,
+        cursor_factory=RealDictCursor
+        )
+        mycursor = mydb.cursor()
+       
+        val = (user.id,)
+        sql = "select id,email,name,status,role from users where id=%s"
+        
+        mycursor.execute(sql, val,)
+        myresult = mycursor.fetchone()
+        mycursor.close()
+        mydb.close()
+        response.set_cookie(key="Manish",value=setcookie(verifyuser(Manish)), httponly=True,secure=settings.SECURITYHHTPS, samesite=settings.SAMESITE)
+        if not myresult:
+            raise HTTPException(status.HTTP_404_NOT_FOUND, detail=f"invalid user")
+        return myresult
+    except:
+        return({"msg":"Connection error"})
+
+class Modify_user(BaseModel):
+    name:str
+    id:int
+def modify_user_details_by_id(response:Response,user:Modify_user,Manish:str):
+    role = getrole(Manish)
+    if role!=1:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, detail=f"invalid user")
+
+    
+    try:
+        mydb = psycopg2.connect(
+        host=settings.HOST_NAME,
+        user=settings.USER_NAME,
+        password=settings.USER_PASSWORD,
+        database=settings.DATABASE_NAME,
+        cursor_factory=RealDictCursor
+        )
+        mycursor = mydb.cursor()
+        
+        val = (user.name,user.id,)
+        sql = "update users set name=%s where id=%s"
+            
+        mycursor.execute(sql, val,)
+        mydb.commit()
+        mycursor.close()
+        mydb.close()
+    
+        return({"msg":"Data updated"})
+    except:
+        return({"msg":"Connection error"})
+
+
+def disable_account(response:Response,Manish:str):
+    userid=getuserid(Manish)
+    if not userid:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, detail=f"invalid user")
+    
+    try:
+        mydb = psycopg2.connect(
+        host=settings.HOST_NAME,
+        user=settings.USER_NAME,
+        password=settings.USER_PASSWORD,
+        database=settings.DATABASE_NAME,
+        cursor_factory=RealDictCursor
+        )
+        mycursor = mydb.cursor()
+        
+        val = (userid,)
+        sql = "update users set status='Deleted' where id=%s"
+            
+        mycursor.execute(sql, val,)
+        mydb.commit()
+        mycursor.close()
+        mydb.close()
+        response.delete_cookie("Manish")
+        response.set_cookie(key="Manish",value="a", httponly=True,secure=settings.SECURITYHHTPS, samesite=settings.SAMESITE)
+        return({"msg":"Your account disabled"})
     except:
         return({"msg":"Connection error"})
 
