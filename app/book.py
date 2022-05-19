@@ -129,7 +129,7 @@ def seacrhbyanybooks(response:Response,books:Searchbyany,Manish:Optional[str]=Co
         )
         mycursor = mydb.cursor()
         max_num=books.endindex-books.startindex
-        val = (f"%{books.title}%",books.title,books.authors,books.authors,max_num,books.startindex)
+        val = (f"%{books.title}%",books.title,f"%{books.authors}%",books.authors,max_num,books.startindex)
         # print(val)
         sql="SELECT accno,title,authors,price,status FROM bookmaster where (lower(title) like lower(%s) OR %s IS NULL)  and (lower(authors) like lower(%s) OR %s IS NULL)  order by accno limit %s offset %s"
         mycursor.execute(sql, val,)
